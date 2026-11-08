@@ -88,4 +88,11 @@ element<HTMLButtonElement>('random').addEventListener('click', () => start(rando
 element<HTMLButtonElement>('restart').addEventListener('click', () => start(Number(seedInput.value) || 0));
 seedInput.addEventListener('change', () => start(Number(seedInput.value) || 0));
 
-start(randomSeed());
+/** Opens the map from ?seed= in the URL, or a random one. */
+function initialSeed(): number {
+  const param = new URLSearchParams(window.location.search).get('seed');
+  const seed = Number(param);
+  return param !== null && Number.isInteger(seed) && seed >= 0 ? seed : randomSeed();
+}
+
+start(initialSeed());
