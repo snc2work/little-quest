@@ -137,7 +137,8 @@ export function screenKey(x: number, y: number): string {
  * have to predict along with the next image. "open" is bumping into a closed
  * chest, which opens it.
  */
-export type StepEvent = 'stay' | 'move' | 'bump' | 'open' | 'enter' | 'exit' | 'cross';
+export const EVENTS = ['stay', 'move', 'bump', 'open', 'enter', 'exit', 'cross'] as const;
+export type StepEvent = (typeof EVENTS)[number];
 
 export interface StepResult {
   state: WorldState;
