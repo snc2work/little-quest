@@ -15,13 +15,15 @@ export const PALETTE = [
   '#e0453a', // 5 red: the player
   '#ecd6a8', // 6 beige: floor, hut wall
   '#4a2c14', // 7 dark brown: trunks, door, edges
+  '#3b6fd6', // 8 blue: water
+  '#c9a467', // 9 tan: path
 ] as const;
 
 /** A frame: SCREEN * SCREEN palette indices in row-major order. */
 export type Frame = Uint8Array;
 
 // Pixel art. Each character is a palette index; "." in a sprite is transparent.
-const CHARS: Record<string, number> = { k: 0, g: 1, G: 2, s: 3, b: 4, r: 5, e: 6, d: 7 };
+const CHARS: Record<string, number> = { k: 0, g: 1, G: 2, s: 3, b: 4, r: 5, e: 6, d: 7, w: 8, p: 9 };
 
 const TILE_ART: Record<Tile, readonly string[]> = {
   [Tile.Grass]: ['gggg', 'gggg', 'gggg', 'gggg'],
@@ -38,6 +40,8 @@ const TILE_ART: Record<Tile, readonly string[]> = {
   [Tile.Table]: ['bbbb', 'bbbb', 'dddd', 'deed'],
   [Tile.Bed]: ['dddd', 'deed', 'GGGG', 'GGGG'],
   [Tile.Barrel]: ['ebbe', 'bddb', 'bddb', 'ebbe'],
+  [Tile.Water]: ['wwww', 'wwww', 'wwww', 'wwww'],
+  [Tile.Path]: ['pppp', 'pppp', 'pppp', 'pppp'],
 };
 
 // The player is a red ball whose eyes sit on the side it faces.

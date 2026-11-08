@@ -47,15 +47,26 @@ describe('map generation', () => {
     expect(layouts.size).toBeGreaterThan(SEEDS.length * 0.95);
   });
 
-  it('puts the hut door above walkable grass that the player can reach', () => {
+  it('puts the start of a path below the hut door, where the player can reach', () => {
     for (const seed of SEEDS) {
       const { map, start } = generateMap(seed);
       expect(tileAt(map.tiles, map.door.row, map.door.col)).toBe(Tile.HutDoor);
-      expect(tileAt(map.tiles, map.doorFront.row, map.doorFront.col)).toBe(Tile.Grass);
+      expect(tileAt(map.tiles, map.doorFront.row, map.doorFront.col)).toBe(Tile.Path);
       const reachable = reachableFrom(map.tiles, map.doorFront);
       expect(reachable).toContainEqual({ row: start.row, col: start.col });
       expect(isWalkable(tileAt(map.tiles, start.row, start.col))).toBe(true);
     }
+  });
+
+  it('makes some maps with ponds or rivers, and paths longer than one tile', () => {
+    const counts = SEEDS.map((seed) => {
+      const { tiles } = generateMap(seed).map;
+      return { water: tiles.filter((t) => t === Tile.Water).length, path: tiles.filter((t) => t === Tile.Path).length };
+    });
+    const withWater = counts.filter((c) => c.water > 0).length;
+    expect(withWater).toBeGreaterThan(SEEDS.length * 0.4);
+    expect(withWater).toBeLessThan(SEEDS.length * 0.9);
+    expect(counts.filter((c) => c.path > 1).length).toBeGreaterThan(SEEDS.length * 0.5);
   });
 });
 
@@ -64,6 +75,14 @@ describe('movement', () => {
     const { state, event } = step(worldOn(openMap(), { row: 4, col: 4, facing: 'up' }), 'right');
     expect(event).toBe('move');
     expect(state.mapPlayer).toEqual({ row: 4, col: 5, facing: 'right' });
+  });
+
+  it('walks on the path', () => {
+    const map = openMap();
+    const tiles = [...map.tiles];
+    tiles[5 * GRID + 4] = Tile.Path;
+    const { event } = step(worldOn({ ...map, tiles }, { row: 4, col: 4, facing: 'up' }), 'down');
+    expect(event).toBe('move');
   });
 
   it('stays put on "none"', () => {
@@ -79,14 +98,16 @@ describe('movement', () => {
     expect(state.mapPlayer).toEqual({ row: 7, col: 7, facing: 'down' });
   });
 
-  it('bumps into trees, rocks and the hut walls', () => {
+  it('bumps into trees, rocks, water and the hut walls', () => {
     const map = openMap();
     const tiles = [...map.tiles];
     tiles[5 * GRID + 5] = Tile.Tree;
     tiles[5 * GRID + 3] = Tile.Rock;
+    tiles[5 * GRID + 7] = Tile.Water;
     const blocked = { ...map, tiles };
     expect(step(worldOn(blocked, { row: 4, col: 5, facing: 'up' }), 'down').event).toBe('bump');
     expect(step(worldOn(blocked, { row: 4, col: 3, facing: 'up' }), 'down').event).toBe('bump');
+    expect(step(worldOn(blocked, { row: 4, col: 7, facing: 'up' }), 'down').event).toBe('bump');
     expect(step(worldOn(blocked, { row: 2, col: 0, facing: 'down' }), 'up').event).toBe('bump');
     expect(step(worldOn(blocked, { row: 1, col: 3, facing: 'down' }), 'left').event).toBe('bump');
   });

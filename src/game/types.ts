@@ -19,7 +19,7 @@ export const DELTAS: Record<Direction, { dr: number; dc: number }> = {
   right: { dr: 0, dc: 1 },
 };
 
-/** Tile kinds. Only Grass and Floor can be walked on. */
+/** Tile kinds. Only Grass, Path and Floor can be walked on. */
 export const Tile = {
   Grass: 0,
   Tree: 1,
@@ -35,11 +35,13 @@ export const Tile = {
   Table: 11,
   Bed: 12,
   Barrel: 13,
+  Water: 14,
+  Path: 15,
 } as const;
 export type Tile = (typeof Tile)[keyof typeof Tile];
 
 export function isWalkable(tile: Tile): boolean {
-  return tile === Tile.Grass || tile === Tile.Floor;
+  return tile === Tile.Grass || tile === Tile.Path || tile === Tile.Floor;
 }
 
 export interface Position {

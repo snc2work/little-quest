@@ -62,6 +62,49 @@ function tryGenerate(seed: number, rng: Prng): GeneratedMap | null {
   set(door.row, door.col, Tile.HutDoor);
   set(hut.row + 1, hut.col + 2, Tile.HutWall);
 
+  // Water only goes on grass and never in front of the door.
+  const setWater = (row: number, col: number) => {
+    if (!inBounds(row, col) || tiles[row * GRID + col] !== Tile.Grass) return;
+    if (row === doorFront.row && col === doorFront.col) return;
+    set(row, col, Tile.Water);
+  };
+  const water = rng.int(3); // 0: none, 1: pond, 2: river
+  if (water === 1) {
+    const height = 2 + rng.int(2);
+    const width = 2 + rng.int(2);
+    const top = rng.int(GRID - height + 1);
+    const left = rng.int(GRID - width + 1);
+    for (let row = top; row < top + height; row++) {
+      for (let col = left; col < left + width; col++) setWater(row, col);
+    }
+  } else if (water === 2) {
+    // A one-tile river across the screen that wanders sideways. Where it would
+    // hit the hut it is skipped, which leaves a gap to cross.
+    const vertical = rng.int(2) === 0;
+    let offset = rng.int(GRID);
+    for (let along = 0; along < GRID; along++) {
+      if (vertical) setWater(along, offset);
+      else setWater(offset, along);
+      offset = Math.min(GRID - 1, Math.max(0, offset + rng.int(3) - 1));
+    }
+  }
+
+  // A dirt path from the door that wanders down until it meets something.
+  let cursor = { ...doorFront };
+  set(cursor.row, cursor.col, Tile.Path);
+  for (let length = 0; length < GRID * 2; length++) {
+    const roll = rng.int(10);
+    const direction: Direction = roll < 6 ? 'down' : roll < 8 ? 'left' : 'right';
+    const row = cursor.row + DELTAS[direction].dr;
+    const col = cursor.col + DELTAS[direction].dc;
+    if (!inBounds(row, col) || tiles[row * GRID + col] !== Tile.Grass) {
+      if (direction === 'down') break;
+      continue;
+    }
+    set(row, col, Tile.Path);
+    cursor = { row, col };
+  }
+
   // Scatter trees and rocks over the remaining grass at a per-map density.
   const density = 10 + rng.int(16); // percent
   for (let row = 0; row < GRID; row++) {
