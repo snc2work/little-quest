@@ -3,7 +3,7 @@
 // next to the model. The world model itself never calls them.
 
 import { generateMap } from './map';
-import { ROOM_SPAWN, ROOM_TILES } from './room';
+import { ROOM_SPAWN, roomTiles } from './room';
 import {
   DELTAS,
   inBounds,
@@ -46,7 +46,7 @@ export function step(state: WorldState, action: Action): StepResult {
 
   const row = player.row + DELTAS[action].dr;
   const col = player.col + DELTAS[action].dc;
-  const tiles = inRoom ? ROOM_TILES : state.map.tiles;
+  const tiles = inRoom ? roomTiles(state.map.hutKind) : state.map.tiles;
   const free = inBounds(row, col) && isWalkable(tileAt(tiles, row, col));
   const moved: Player = free ? { row, col, facing: action } : { ...player, facing: action };
   const next = inRoom ? { ...state, roomPlayer: moved } : { ...state, mapPlayer: moved };

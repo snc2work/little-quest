@@ -19,7 +19,7 @@ export const DELTAS: Record<Direction, { dr: number; dc: number }> = {
   right: { dr: 0, dc: 1 },
 };
 
-/** Tile kinds. Only Grass, Path and Floor can be walked on. */
+/** Tile kinds. Only Grass, Path, Floor and DirtFloor can be walked on. */
 export const Tile = {
   Grass: 0,
   Tree: 1,
@@ -39,11 +39,15 @@ export const Tile = {
   Path: 15,
   HutWallRight: 16,
   Fireplace: 17,
+  StoneWall: 18,
+  DirtFloor: 19,
+  Crate: 20,
+  Plant: 21,
 } as const;
 export type Tile = (typeof Tile)[keyof typeof Tile];
 
 export function isWalkable(tile: Tile): boolean {
-  return tile === Tile.Grass || tile === Tile.Path || tile === Tile.Floor;
+  return tile === Tile.Grass || tile === Tile.Path || tile === Tile.Floor || tile === Tile.DirtFloor;
 }
 
 export interface Position {
@@ -68,11 +72,19 @@ export function inBounds(row: number, col: number): boolean {
 
 export type Scene = 'map' | 'room';
 
+/**
+ * Kinds of hut. Each kind looks different from outside and has its own room, so
+ * the room can be told from the map image alone.
+ */
+export const HUT_KINDS = ['cabin', 'stone', 'moss', 'bath'] as const;
+export type HutKind = (typeof HUT_KINDS)[number];
+
 export interface GameMap {
   seed: number;
   tiles: Layout;
   /** Top-left tile of the 3x2 hut. */
   hut: Position;
+  hutKind: HutKind;
   /** The hut's door tile. */
   door: Position;
   /** The tile below the door; stepping up from here enters the hut. */

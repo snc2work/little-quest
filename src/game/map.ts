@@ -8,6 +8,7 @@ import {
   inBounds,
   isWalkable,
   tileAt,
+  HUT_KINDS,
   type Direction,
   type GameMap,
   type Layout,
@@ -55,6 +56,7 @@ function tryGenerate(seed: number, rng: Prng): GeneratedMap | null {
   const hut = { row: rng.int(GRID - HUT_HEIGHT), col: rng.int(GRID - HUT_WIDTH + 1) };
   const door = { row: hut.row + 1, col: hut.col + 1 };
   const doorFront = { row: door.row + 1, col: door.col };
+  const hutKind = HUT_KINDS[rng.int(HUT_KINDS.length)];
   set(hut.row, hut.col, Tile.RoofLeft);
   set(hut.row, hut.col + 1, Tile.RoofMid);
   set(hut.row, hut.col + 2, Tile.RoofRight);
@@ -121,7 +123,7 @@ function tryGenerate(seed: number, rng: Prng): GeneratedMap | null {
 
   const spot = reachable[rng.int(reachable.length)];
   const start: Player = { ...spot, facing: DIRECTIONS[rng.int(DIRECTIONS.length)] };
-  return { map: { seed, tiles, hut, door, doorFront }, start };
+  return { map: { seed, tiles, hut, hutKind, door, doorFront }, start };
 }
 
 /** Generates a map and a start position from a seed. The same seed gives the same map. */
