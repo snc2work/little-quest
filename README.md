@@ -216,9 +216,9 @@ The scene and screen are for analysis only. The world model is not given them.
 
 ## Related projects
 
-- [tinyworldformer](https://github.com/SheepSeb/tinyworldformer): tiny world models that draw small games frame by frame, small enough to run on a Raspberry Pi Pico 2 W. Seeing a world model that small is what made the author want to build a small one too, and this project started from there.
+- [tinyworldformer](https://github.com/SheepSeb/tinyworldformer): tiny world models that draw small games frame by frame, small enough to run on a Raspberry Pi Pico 2 W. Seeing a world model that small made me want to build a small one too, and this project started from there.
 - [Genie](https://arxiv.org/abs/2402.15391) and [MaskGIT](https://arxiv.org/abs/2202.04200): the ideas behind a world you can walk around in, and behind drawing a frame over a few rounds.
-- [ABYSS GEMS](https://github.com/snc2work/abyss-gems): another small world model experiment by the same author. A falling-block puzzle whose matches are run by a neural network instead of the rules. It also plays in the browser.
+- [ABYSS GEMS](https://github.com/snc2work/abyss-gems): my other small world model experiment. A falling-block puzzle whose matches are run by a neural network instead of the rules. It also plays in the browser.
 
 ## License
 
