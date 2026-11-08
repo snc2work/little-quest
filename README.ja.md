@@ -75,7 +75,7 @@ npm install
 npm run dev
 ```
 
-表示された URL（たいてい `http://localhost:5173`）を開きます。
+表示された URL（たいてい `http://localhost:5173`）を開きます。pnpm の場合は `pnpm install` と `pnpm dev` です。
 
 ## 遊び方
 
