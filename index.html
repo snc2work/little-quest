@@ -23,7 +23,18 @@
         <dt>Last event</dt>
         <dd id="event">-</dd>
       </dl>
-      <p class="help">Arrow keys or WASD to move. Space to wait. Walk up into the hut door to go inside.</p>
+      <div id="pad" aria-label="Controls">
+        <button type="button" data-action="up" class="up" title="Up">&#9650;</button>
+        <button type="button" data-action="left" class="left" title="Left">&#9664;</button>
+        <button type="button" data-action="none" class="wait" title="Wait">Wait</button>
+        <button type="button" data-action="right" class="right" title="Right">&#9654;</button>
+        <button type="button" data-action="down" class="down" title="Down">&#9660;</button>
+      </div>
+      <p class="help">
+        Move with the arrow keys, WASD or the buttons. Space waits.<br />
+        To go inside, stand on the path right below the hut door and press Up.<br />
+        To go back out, stand right above the room's exit and press Down.
+      </p>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

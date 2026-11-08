@@ -89,4 +89,40 @@ button:hover {
   margin: 0;
   color: #9aa0ab;
   font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+#pad {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 6px;
+}
+
+#pad button {
+  padding: 0;
+  font-size: 16px;
+  touch-action: manipulation;
+}
+
+#pad .up {
+  grid-area: 1 / 2;
+}
+
+#pad .left {
+  grid-area: 2 / 1;
+}
+
+#pad .wait {
+  grid-area: 2 / 2;
+  font-size: 13px;
+}
+
+#pad .right {
+  grid-area: 2 / 3;
+}
+
+#pad .down {
+  grid-area: 3 / 2;
 }

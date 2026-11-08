@@ -80,6 +80,10 @@ window.addEventListener('keydown', (event) => {
   act(action);
 });
 
+for (const button of element<HTMLDivElement>('pad').querySelectorAll<HTMLButtonElement>('button')) {
+  button.addEventListener('click', () => act(button.dataset.action as Action));
+}
+
 element<HTMLButtonElement>('random').addEventListener('click', () => start(randomSeed()));
 element<HTMLButtonElement>('restart').addEventListener('click', () => start(Number(seedInput.value) || 0));
 seedInput.addEventListener('change', () => start(Number(seedInput.value) || 0));
