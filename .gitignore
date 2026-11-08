@@ -10,3 +10,4 @@ dist/
 
 # Local tool settings
 .claude/
+data/
