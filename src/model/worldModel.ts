@@ -21,6 +21,7 @@ export interface OrtApi {
 /** public/models/<run>/model.json, written by the training project's export script. */
 export interface ModelInfo {
   run: string;
+  parameters: number;
   frame: number;
   block: number;
   grid: number;

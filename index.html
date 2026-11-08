@@ -3,29 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Little Quest</title>
+    <meta name="description" content="A tiny world model that draws the next frame of a little adventure game, in your browser." />
+    <title>Little Quest – a tiny world model</title>
   </head>
   <body>
-    <main>
-      <h1>Little Quest</h1>
+    <main class="demo">
+      <header>
+        <h1>Little Quest</h1>
+        <p class="lead">
+          A tiny world model in your browser. It looks at the last frame and your key, and draws the next frame.<br />
+          Walk into a hut or off the edge of the screen, and it makes up the place.
+        </p>
+      </header>
+
       <div id="controls">
         <label for="seed">World No.</label>
         <input id="seed" type="number" min="0" step="1" />
         <button id="random" type="button" title="Pick a random world number">Random</button>
         <button id="restart" type="button" title="Start this world again">Restart</button>
-        <a href="./gallery.html">All huts and rooms</a>
+        <label for="temperature" title="Low: plain, likely places. High: busier, odder places.">Temperature</label>
+        <input id="temperature" type="range" min="0" max="1.5" step="0.1" value="1" />
+        <output id="temperature-value" for="temperature">1.0</output>
       </div>
-      <canvas id="screen" width="32" height="32" tabindex="0"></canvas>
-      <dl id="info">
-        <dt>Scene</dt>
-        <dd id="scene">-</dd>
-        <dt>Screen</dt>
-        <dd id="screen-pos">-</dd>
-        <dt>Steps</dt>
-        <dd id="steps">0</dd>
-        <dt>Last event</dt>
-        <dd id="event">-</dd>
-      </dl>
+      <p id="status" role="status">Loading the world model…</p>
+
+      <section id="worlds">
+        <figure class="world">
+          <figcaption>World model <span class="sub">every frame drawn by the model</span></figcaption>
+          <canvas id="model-screen" width="32" height="32" tabindex="0"></canvas>
+        </figure>
+        <figure class="world">
+          <figcaption>Real game <span class="sub">the same keys, for comparison</span></figcaption>
+          <canvas id="real-screen" width="32" height="32"></canvas>
+        </figure>
+      </section>
+
       <div id="pad" aria-label="Controls">
         <button type="button" data-action="up" class="up" title="Up">&#9650;</button>
         <button type="button" data-action="left" class="left" title="Left">&#9664;</button>
@@ -36,9 +48,77 @@
       <p class="help">
         Move with the arrow keys, WASD or the buttons. Space waits.<br />
         Walk off the edge of the screen to go on to the next one.<br />
-        To go inside, stand on the path right below the hut door and press Up.<br />
-        To go back out, stand right above the room's exit and press Down.
+        To go inside, stand on the path right below a hut door and press Up. To go back out, stand above the exit and press Down.
       </p>
+
+      <section id="panels">
+        <div class="panel">
+          <h2>Stats</h2>
+          <dl id="stats">
+            <dt>Steps</dt>
+            <dd id="steps">0</dd>
+            <dt>Model time</dt>
+            <dd id="model-time">-</dd>
+            <dt>Same as the real game</dt>
+            <dd id="same">-</dd>
+            <dt>First difference</dt>
+            <dd id="first-difference">-</dd>
+            <dt>Where the model is</dt>
+            <dd id="place">-</dd>
+            <dt>Places remembered</dt>
+            <dd id="remembered">0</dd>
+            <dt>Model</dt>
+            <dd id="model-name">-</dd>
+          </dl>
+          <table id="event-counts">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Model</th>
+                <th>Real</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h2>History</h2>
+          <table id="history">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Key</th>
+                <th>Model</th>
+                <th>Real</th>
+                <th>ms</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="about">
+        <h2>How it works</h2>
+        <ul>
+          <li>
+            The real game exists only to make training videos. The model never sees its rules, maps or rooms, only frames and keys.
+            It runs here with ONNX Runtime Web, in a Web Worker.
+          </li>
+          <li>
+            A frame is an 8×8 grid of 4×4 blocks (60 kinds, collected from the training frames). The model picks a block for every
+            cell over up to 8 rounds, surest first. Where the next frame is open, as in a new room or a new screen, it samples, so
+            every world turns out different.
+          </li>
+          <li>
+            The model also says what happened (move, bump, enter, exit, cross…). From that alone the page keeps the last frame of
+            each place. Going back to a place, that frame is handed to the model, which only draws the player again.
+          </li>
+          <li>The black fade when going in or out is added by the page, not drawn by the model.</li>
+          <li>The same world number, keys and temperature give the same model world.</li>
+        </ul>
+        <p><a href="./gallery.html">The real game's huts and rooms</a></p>
+      </section>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

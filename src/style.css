@@ -53,36 +53,193 @@ button:hover {
   background: #2c313b;
 }
 
-#screen {
-  width: 512px;
-  height: 512px;
-  max-width: 90vw;
-  max-height: 90vw;
+.demo {
+  max-width: 1100px;
+}
+
+.demo header {
+  text-align: center;
+}
+
+.lead {
+  margin: 8px 0 0;
+  color: #b8bec9;
+  line-height: 1.6;
+}
+
+#controls {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#controls label[for='temperature'] {
+  margin-left: 12px;
+}
+
+#temperature-value {
+  min-width: 2.5em;
+  font-variant-numeric: tabular-nums;
+}
+
+#status {
+  margin: 0;
+  color: #f2c230;
+}
+
+#worlds {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+.world {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.world figcaption {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.world .sub {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: #9aa0ab;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.world canvas {
+  width: 416px;
+  height: 416px;
+  max-width: 88vw;
+  max-height: 88vw;
   image-rendering: pixelated;
   border-radius: 8px;
   outline: none;
   background: #000;
 }
 
-#screen:focus-visible {
+#model-screen {
   box-shadow: 0 0 0 2px #6c8cff;
 }
 
-#info {
-  display: grid;
-  grid-template-columns: repeat(4, auto auto);
-  gap: 4px 12px;
-  margin: 0;
+#model-screen:focus-visible {
+  box-shadow: 0 0 0 3px #9fb5ff;
 }
 
-#info dt {
+#panels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.panel {
+  flex: 1 1 380px;
+  max-width: 520px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #1d2027;
+}
+
+.panel h2,
+#about h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+#stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+#stats dt {
   color: #9aa0ab;
 }
 
-#info dd {
+#stats dd {
   margin: 0;
-  min-width: 48px;
   font-variant-numeric: tabular-nums;
+}
+
+#stats .yes {
+  color: #7fd18b;
+}
+
+#stats .no {
+  color: #f2a33a;
+}
+
+.panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel th,
+.panel td {
+  padding: 2px 6px;
+  text-align: left;
+  border-bottom: 1px solid #2a2e37;
+}
+
+.panel th {
+  color: #9aa0ab;
+  font-weight: 400;
+}
+
+#history tbody {
+  display: block;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+#history thead,
+#history tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+#history th:first-child,
+#history td:first-child,
+#history th:last-child,
+#history td:last-child {
+  width: 3.5em;
+}
+
+#history th:nth-child(2),
+#history td:nth-child(2) {
+  width: 3.5em;
+}
+
+#history tr.differs td:nth-child(3) {
+  color: #f2a33a;
+}
+
+#about {
+  max-width: 760px;
+  color: #c4c9d2;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+#about ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
 }
 
 a {
