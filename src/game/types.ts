@@ -43,6 +43,9 @@ export const Tile = {
   DirtFloor: 19,
   Crate: 20,
   Plant: 21,
+  Chest: 22,
+  OpenChest: 23,
+  Pot: 24,
 } as const;
 export type Tile = (typeof Tile)[keyof typeof Tile];
 
@@ -73,8 +76,8 @@ export function inBounds(row: number, col: number): boolean {
 export type Scene = 'map' | 'room';
 
 /**
- * Kinds of hut. Each kind looks different from outside and has its own room, so
- * the room can be told from the map image alone.
+ * Kinds of hut. Each kind looks different from outside and sets the style of its
+ * room (walls, floor, furniture). What is inside is random for each map.
  */
 export const HUT_KINDS = ['cabin', 'stone', 'moss', 'bath'] as const;
 export type HutKind = (typeof HUT_KINDS)[number];
@@ -91,9 +94,17 @@ export interface GameMap {
   doorFront: Position;
 }
 
+export interface Room {
+  tiles: Layout;
+  wall: Tile;
+  floor: Tile;
+}
+
 export interface WorldState {
   scene: Scene;
   map: GameMap;
+  /** The inside of this map's hut. Opened chests stay open. */
+  room: Room;
   /** The player on the map. Kept while inside, so leaving puts them back by the door. */
   mapPlayer: Player;
   /** The player in the room. */
@@ -102,9 +113,10 @@ export interface WorldState {
 
 /**
  * What a step did. "enter" and "exit" switch the scene; these are the signals the
- * world model will have to predict along with the next image.
+ * world model will have to predict along with the next image. "open" is bumping
+ * into a closed chest, which opens it.
  */
-export type StepEvent = 'stay' | 'move' | 'bump' | 'enter' | 'exit';
+export type StepEvent = 'stay' | 'move' | 'bump' | 'open' | 'enter' | 'exit';
 
 export interface StepResult {
   state: WorldState;

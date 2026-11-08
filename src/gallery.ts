@@ -1,6 +1,6 @@
 import './style.css';
 
-import { HUT_KINDS, ROOM_SPAWN, generateMap, renderScene, roomTiles, type HutKind } from './game';
+import { HUT_KINDS, ROOM_SPAWN, Tile, generateMap, newWorld, renderScene, type HutKind } from './game';
 import { FrameCanvas } from './ui/frameCanvas';
 
 const EXAMPLES_PER_KIND = 4;
@@ -43,16 +43,20 @@ for (const kind of HUT_KINDS) {
   const row = document.createElement('div');
   row.className = 'row';
 
-  const room = figure('Room');
-  room.root.classList.add('room');
-  new FrameCanvas(room.canvas).draw(renderScene(roomTiles(kind), ROOM_SPAWN));
-  row.append(room.root);
-
   for (const seed of seeds[kind]) {
-    const { map, start } = generateMap(seed);
-    const example = figure(`Map ${seed}`, `./?seed=${seed}`);
-    new FrameCanvas(example.canvas).draw(renderScene(map.tiles, start, map.hutKind));
-    row.append(example.root);
+    const world = newWorld(seed);
+    const pair = document.createElement('div');
+    pair.className = 'pair';
+
+    const map = figure(`Map ${seed}`, `./?seed=${seed}`);
+    new FrameCanvas(map.canvas).draw(renderScene(world.map.tiles, world.mapPlayer, kind));
+    const hasChest = world.room.tiles.includes(Tile.Chest);
+    const room = figure(hasChest ? 'Its room (chest)' : 'Its room');
+    room.root.classList.add('room');
+    new FrameCanvas(room.canvas).draw(renderScene(world.room.tiles, ROOM_SPAWN, kind, world.room.floor));
+
+    pair.append(map.root, room.root);
+    row.append(pair);
   }
 
   section.append(title, row);

@@ -91,7 +91,7 @@ a {
 
 .gallery {
   align-items: stretch;
-  max-width: 980px;
+  max-width: 1300px;
 }
 
 .gallery h2 {
@@ -103,6 +103,14 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.gallery .pair {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  background: #1d2027;
 }
 
 .gallery .tile {
@@ -117,8 +125,8 @@ a {
 }
 
 .gallery .tile canvas {
-  width: 160px;
-  height: 160px;
+  width: 140px;
+  height: 140px;
   image-rendering: pixelated;
   border-radius: 6px;
 }

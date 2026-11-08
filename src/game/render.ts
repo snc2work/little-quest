@@ -2,7 +2,6 @@
 // This image is exactly what the world model sees and predicts, so the drawing
 // must stay deterministic and pixel-exact.
 
-import { roomTiles } from './room';
 import {
   GRID,
   SCREEN,
@@ -27,13 +26,15 @@ export const PALETTE = [
   '#4a2c14', // 7 dark brown: trunks, door, edges
   '#3b6fd6', // 8 blue: water, bath house roof
   '#c9a467', // 9 tan: path, thatch, dirt floor, floor seams, fire
+  '#f2c230', // 10 gold: chests
 ] as const;
 
 /** A frame: SCREEN * SCREEN palette indices in row-major order. */
 export type Frame = Uint8Array;
 
-// Pixel art. Each character is a palette index; "." in a sprite is transparent.
-const CHARS: Record<string, number> = { k: 0, g: 1, G: 2, s: 3, b: 4, r: 5, e: 6, d: 7, w: 8, p: 9 };
+// Pixel art. Each character is a palette index. "." is transparent: the floor of
+// the scene (grass outside, the room's floor inside) shows through.
+const CHARS: Record<string, number> = { k: 0, g: 1, G: 2, s: 3, b: 4, r: 5, e: 6, d: 7, w: 8, p: 9, y: 10 };
 
 const TILE_ART: Record<Tile, readonly string[]> = {
   [Tile.Grass]: ['gggg', 'gggg', 'gggg', 'gggg'],
@@ -54,10 +55,13 @@ const TILE_ART: Record<Tile, readonly string[]> = {
   [Tile.ExitDoor]: ['bkkb', 'dkkd', 'bkkb', 'dkkd'],
   [Tile.Fireplace]: ['ssss', 'skks', 'spps', 'ssss'],
   [Tile.Crate]: ['dddd', 'dbbd', 'dbbd', 'dddd'],
-  [Tile.Plant]: ['eGGe', 'GGGG', 'eGGe', 'ebbe'],
+  [Tile.Plant]: ['.GG.', 'GGGG', '.GG.', '.bb.'],
+  [Tile.Pot]: ['.dd.', 'ssss', 'ssss', '.ss.'],
+  [Tile.Chest]: ['dddd', 'yyyy', 'byyb', 'bbbb'],
+  [Tile.OpenChest]: ['bbbb', 'dkkd', 'dkkd', 'bbbb'],
   [Tile.Table]: ['bbbb', 'bbbb', 'dddd', 'deed'],
   [Tile.Bed]: ['dddd', 'deed', 'GGGG', 'GGGG'],
-  [Tile.Barrel]: ['ebbe', 'bddb', 'bddb', 'ebbe'],
+  [Tile.Barrel]: ['.bb.', 'bddb', 'bddb', '.bb.'],
   [Tile.Water]: ['wwww', 'wwww', 'wwww', 'wwww'],
   [Tile.Path]: ['pppp', 'pppp', 'pppp', 'pppp'],
 };
@@ -155,12 +159,18 @@ function drawArt(frame: Frame, art: readonly string[], row: number, col: number)
   }
 }
 
-/** Draws a scene. hutKind picks the look of any hut tiles in the layout. */
-export function renderScene(tiles: Layout, player: Player, hutKind: HutKind = 'cabin'): Frame {
+/**
+ * Draws a scene. hutKind picks the look of any hut tiles in the layout; base is
+ * the floor drawn under tiles with transparent pixels.
+ */
+export function renderScene(tiles: Layout, player: Player, hutKind: HutKind = 'cabin', base: Tile = Tile.Grass): Frame {
   const frame: Frame = new Uint8Array(SCREEN * SCREEN);
+  const baseArt = TILE_ART[base];
   for (let row = 0; row < GRID; row++) {
     for (let col = 0; col < GRID; col++) {
-      drawArt(frame, tileArt(tiles[row * GRID + col], hutKind), row, col);
+      const art = tileArt(tiles[row * GRID + col], hutKind);
+      if (art.some((line) => line.includes('.'))) drawArt(frame, baseArt, row, col);
+      drawArt(frame, art, row, col);
     }
   }
   drawArt(frame, PLAYER_ART[player.facing], player.row, player.col);
@@ -169,6 +179,6 @@ export function renderScene(tiles: Layout, player: Player, hutKind: HutKind = 'c
 
 export function render(state: WorldState): Frame {
   return state.scene === 'room'
-    ? renderScene(roomTiles(state.map.hutKind), state.roomPlayer)
+    ? renderScene(state.room.tiles, state.roomPlayer, state.map.hutKind, state.room.floor)
     : renderScene(state.map.tiles, state.mapPlayer, state.map.hutKind);
 }

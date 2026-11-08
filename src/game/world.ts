@@ -3,9 +3,11 @@
 // next to the model. The world model itself never calls them.
 
 import { generateMap } from './map';
-import { ROOM_SPAWN, roomTiles } from './room';
+import { ROOM_SPAWN, generateRoom } from './room';
 import {
   DELTAS,
+  GRID,
+  Tile,
   inBounds,
   isWalkable,
   tileAt,
@@ -17,7 +19,8 @@ import {
 
 export function newWorld(seed: number): WorldState {
   const { map, start } = generateMap(seed);
-  return { scene: 'map', map, mapPlayer: start, roomPlayer: { ...ROOM_SPAWN } };
+  const room = generateRoom(seed, map.hutKind);
+  return { scene: 'map', map, room, mapPlayer: start, roomPlayer: { ...ROOM_SPAWN } };
 }
 
 function at(player: Player, row: number, col: number): boolean {
@@ -46,7 +49,18 @@ export function step(state: WorldState, action: Action): StepResult {
 
   const row = player.row + DELTAS[action].dr;
   const col = player.col + DELTAS[action].dc;
-  const tiles = inRoom ? roomTiles(state.map.hutKind) : state.map.tiles;
+  const tiles = inRoom ? state.room.tiles : state.map.tiles;
+
+  // Bumping into a closed chest opens it.
+  if (inRoom && inBounds(row, col) && tileAt(tiles, row, col) === Tile.Chest) {
+    const opened = [...tiles];
+    opened[row * GRID + col] = Tile.OpenChest;
+    return {
+      state: { ...state, room: { ...state.room, tiles: opened }, roomPlayer: { ...player, facing: action } },
+      event: 'open',
+    };
+  }
+
   const free = inBounds(row, col) && isWalkable(tileAt(tiles, row, col));
   const moved: Player = free ? { row, col, facing: action } : { ...player, facing: action };
   const next = inRoom ? { ...state, roomPlayer: moved } : { ...state, mapPlayer: moved };
