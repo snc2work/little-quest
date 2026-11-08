@@ -9,10 +9,11 @@ const LEGEND: Record<string, Tile> = {
   T: Tile.Table,
   B: Tile.Bed,
   O: Tile.Barrel,
+  P: Tile.Fireplace,
 };
 
 const ROWS = [
-  'WWWWWWWW',
+  'WWPWWWWW',
   'WFFFFFBW',
   'WFTTFFFW',
   'WFFFFFFW',

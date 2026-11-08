@@ -38,6 +38,7 @@ export const Tile = {
   Water: 14,
   Path: 15,
   HutWallRight: 16,
+  Fireplace: 17,
 } as const;
 export type Tile = (typeof Tile)[keyof typeof Tile];
 

@@ -10,13 +10,13 @@ export const PALETTE = [
   '#000000', // 0 black: doorway, eyes
   '#4caf50', // 1 grass
   '#1e5a2c', // 2 dark green: tree crowns, blanket
-  '#8c8c8c', // 3 gray: rocks, walls, window
-  '#a0602c', // 4 brown: roof, table, barrel
+  '#8c8c8c', // 3 gray: rocks, fireplace
+  '#a0602c', // 4 brown: logs, table, barrel
   '#e0453a', // 5 red: the player
-  '#ecd6a8', // 6 beige: floor, hut wall
+  '#ecd6a8', // 6 beige: floor
   '#4a2c14', // 7 dark brown: trunks, door, edges
   '#3b6fd6', // 8 blue: water
-  '#c9a467', // 9 tan: path
+  '#c9a467', // 9 tan: path, thatch, floor seams, fire
 ] as const;
 
 /** A frame: SCREEN * SCREEN palette indices in row-major order. */
@@ -44,9 +44,11 @@ const TILE_ART: Record<Tile, readonly string[]> = {
   [Tile.HutWallLeft]: ['gbbb', 'gbkb', 'gddd', 'gbbb'],
   [Tile.HutDoor]: ['bbbb', 'bkkb', 'dkkd', 'bkkb'],
   [Tile.HutWallRight]: ['bbbg', 'bkbg', 'dddg', 'bbbg'],
-  [Tile.Floor]: ['eeee', 'eeee', 'eeee', 'eeee'],
-  [Tile.Wall]: ['ssss', 'ssss', 'ssss', 'ssss'],
-  [Tile.ExitDoor]: ['skks', 'skks', 'skks', 'skks'],
+  // Inside the cabin: log walls, a plank floor and a stone fireplace.
+  [Tile.Floor]: ['eeee', 'eeee', 'eeee', 'pppp'],
+  [Tile.Wall]: ['bbbb', 'dddd', 'bbbb', 'dddd'],
+  [Tile.ExitDoor]: ['bkkb', 'dkkd', 'bkkb', 'dkkd'],
+  [Tile.Fireplace]: ['ssss', 'skks', 'spps', 'ssss'],
   [Tile.Table]: ['bbbb', 'bbbb', 'dddd', 'deed'],
   [Tile.Bed]: ['dddd', 'deed', 'GGGG', 'GGGG'],
   [Tile.Barrel]: ['ebbe', 'bddb', 'bddb', 'ebbe'],
