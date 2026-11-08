@@ -147,7 +147,7 @@ From a real frame, the model draws the next one. When waiting, moving, bumping o
 
 ### Small flaws
 
-- A hut on a new screen sometimes comes out broken (part of the roof shifted).
+- Huts on new screens often come out broken (part of the roof or wall shifted, or a door missing). A hut spans many blocks, and a model this small does not always make them fit together.
 - A river sometimes stops short, and a single water block floats in the grass.
 - New screens tend to be emptier than the real ones.
 - Rarely, the player shows up twice in a new room (see the bottom row of the room picture above).
