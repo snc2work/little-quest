@@ -2,17 +2,19 @@
 
 [日本語](README.ja.md)
 
-A tiny **world model** you can play in the browser. It looks at the last frame (32×32 pixels, 11 colors) and your key, and draws the next frame. Walk into a hut or off the edge of the screen, and it makes up the room or the next screen on the spot. The model is probabilistic. It does not give one fixed answer: it gives probabilities, and the next frame is sampled from them, so the same frame and key can lead to a different room each time. It is a toy-sized take on the idea behind [Genie](https://arxiv.org/abs/2402.15391): a world you can walk around in, drawn frame by frame by a neural network.
+A tiny **world model** you can play in the browser. It looks at the last frame (32×32 pixels, 11 colors) and your key, and draws the next frame. Walk into a hut or off the edge of the screen, and it makes up the room or the next screen on the spot, a different one each time. It is a toy-sized take on the idea behind [Genie](https://arxiv.org/abs/2402.15391): a world you can walk around in, drawn frame by frame by a neural network.
 
 **Play it in your browser:** https://snc2work.github.io/little-quest/
 
-The page loads the model and opens a random world. Every frame on the left is drawn by the world model, from its own last frame and your key. The real game runs on the right with the same keys, for comparison.
-
 ![World No. 332: the world model on the left, the real game with the same keys on the right](docs/images/world-332.gif)
 
-*World No. 332, temperature 1.0. The two worlds match until the player enters the blue-roofed bathhouse. There the model makes up its own bath room, with a pool, plants and barrels. Back outside, the screen it left comes back. Across the edge, it draws a new screen of its own.*
+*Left: every frame drawn by the world model, from its own last frame and the key. Right: the real game with the same keys, for comparison. World No. 332, temperature 1.0.*
 
-Each row below starts from the same frame, one step before going into a hut (first picture) or across the edge of the screen (second picture). Because the model samples, it makes a different place each time it draws the next frame. The walls, floor and pool match the kind of hut. The edge shared with the screen you came from carries over.
+## What the model makes up
+
+In the animation above, the two worlds match until the player enters the blue-roofed bathhouse. There the model makes up its own bath room, with a pool, plants and barrels. Back outside, the screen it left comes back. Across the edge of the screen, it draws a new screen of its own.
+
+The model is probabilistic, so the same frame and key can lead to a different place each time. In the pictures below, each row starts from the same frame: one step before going into a hut (first picture) or across the edge of the screen (second picture). The model drew the next frame four times. The walls, floor and pool match the kind of hut, and the edge shared with the screen you came from carries over.
 
 ![Rooms the model drew when entering a hut, four times each](docs/images/new-rooms.png)
 
@@ -95,7 +97,7 @@ The address keeps the settings, for example `https://snc2work.github.io/little-q
 
 ## Playing with the world model
 
-The model's world starts from the real game's first frame, and both worlds get the same keys. They show the same frames until the player first goes somewhere new. From there the model draws a world of its own, and the real game on the right shows what the real world does with the same keys.
+The page loads the model (about 11 MB) and opens a random world. The model's world starts from the real game's first frame, and both worlds get the same keys. They show the same frames until the player first goes somewhere new. From there the model draws a world of its own, and the real game on the right shows what the real world does with the same keys.
 
 ### Reading the screen
 
