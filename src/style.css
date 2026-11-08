@@ -67,6 +67,11 @@ button:hover {
   line-height: 1.6;
 }
 
+.links {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
 #controls {
   flex-wrap: wrap;
   justify-content: center;
