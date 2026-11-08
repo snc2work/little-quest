@@ -24,9 +24,9 @@ The model is probabilistic, so the same frame and key can lead to a different pl
 
 - **The real game only makes training videos.** A small adventure game was written for this project (see "The game" below). A simple bot walks around it and records frames and keys. The model never sees the rules, the maps or the rooms. It sees only frames and keys.
 - **Generate, do not copy.** When the player goes somewhere new, there is no right answer to predict. The model is free to draw any room or screen that fits. It only has to be believable and to hold together.
-- **A probabilistic model.** For every cell, the model gives a probability for each of the 60 blocks (see the next point), and the next frame is sampled from these probabilities. Where the next frame follows from the current one (walking, bumping), almost all of the probability sits on one block, so the result is the same every time. Where it does not (a new room or screen), the probability is spread over many blocks, so the same frame and key can lead to different places. The temperature sets how widely the choices spread. The world number fixes the random choices, so a world can be played again.
 - **Frames as blocks.** The game draws everything from 4×4 pictures on a grid, and the training frames contain only 60 different 4×4 blocks. A frame is treated as an 8×8 grid of those blocks. The model picks one block per cell, and the frame is put back together by looking the blocks up. Genie similarly works on image tokens.
-- **Drawn over a few rounds (MaskGIT).** The model starts from a grid where every cell is unknown and fills it in over up to 8 rounds, the cells it is surest about first. When walking or bumping into a tree, it is sure of almost every cell in the first round. Later rounds see the cells already chosen, so the blocks that go together (a table, a hut, a river) come out whole.
+- **A probabilistic model.** For every cell, the model gives a probability for each of the 60 blocks, and the next frame is sampled from these probabilities. Where the next frame follows from the current one (walking, bumping), almost all of the probability sits on one block, so the result is the same every time. Where it does not (a new room or screen), the probability is spread over many blocks, so the same frame and key can lead to different places. The temperature sets how widely the choices spread. The world number fixes the random choices, so a world can be played again.
+- **Drawn over a few rounds ([MaskGIT](https://arxiv.org/abs/2202.04200)).** The model starts from a grid where every cell is unknown and fills it in over up to 8 rounds, the cells it is surest about first. When walking or bumping into a tree, it is sure of almost every cell in the first round. Later rounds see the cells already chosen, so the blocks that go together (a table, a hut, a river) come out whole.
 - **A small memory of places, outside the model.** Along with each frame, the model also says what happened (see "Events" below). From that alone, the page keeps the last frame of each place. When the player goes back somewhere, that frame is handed to the model as the known part of the next frame, and the model only draws the player again. Every frame shown is still drawn by the model.
 - **The black fade is the page's.** The short black screen when going in or out is a display effect added by the page. It is not drawn by the model.
 
@@ -115,7 +115,7 @@ Measured on 20 worlds not used for training (10,000 steps).
 
 ### One step from a real frame
 
-These are the steps whose next frame follows from the current one. A 2×2 window counts as seen when the same 2×2 blocks also occur in the training frames.
+From a real frame, the model draws the next one. When waiting, moving, bumping or opening a chest, the next frame follows from the current one, so it should match the real game exactly. Entering a hut and crossing to a new screen lead somewhere new, so they are not supposed to match. For those, "2×2 windows seen" shows whether the picture holds together: the share of 2×2 windows of blocks that also occur in the training frames.
 
 | Step | Exact frame | Event right | 2×2 windows seen | Player shown |
 | --- | ---: | ---: | ---: | ---: |
@@ -126,7 +126,7 @@ These are the steps whose next frame follows from the current one. A 2×2 window
 | Enter a hut (a new room) | – | 100% | 98.6% (real: 99.0%) | 98.1% |
 | Cross to a new screen | – | 100% | 98.8% (real: 99.7%) | 100% |
 
-New rooms and screens are not supposed to match the real game. For those, the share of 2×2 windows of blocks that also occur in the training frames shows whether the picture holds together. The real frames score 99.0% and 99.7% on the same measure.
+"real" is the same measure on the real next frames, for comparison.
 
 ### 300 steps from its own frames
 
