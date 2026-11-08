@@ -1,0 +1,92 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #15171c;
+  color: #e6e6e6;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0.08em;
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#seed {
+  width: 96px;
+}
+
+input,
+button {
+  font: inherit;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #444a55;
+  background: #22262e;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2c313b;
+}
+
+#screen {
+  width: 512px;
+  height: 512px;
+  max-width: 90vw;
+  max-height: 90vw;
+  image-rendering: pixelated;
+  border-radius: 8px;
+  outline: none;
+  background: #000;
+}
+
+#screen:focus-visible {
+  box-shadow: 0 0 0 2px #6c8cff;
+}
+
+#info {
+  display: grid;
+  grid-template-columns: repeat(3, auto auto);
+  gap: 4px 12px;
+  margin: 0;
+}
+
+#info dt {
+  color: #9aa0ab;
+}
+
+#info dd {
+  margin: 0;
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
+.help {
+  margin: 0;
+  color: #9aa0ab;
+  font-size: 14px;
+}

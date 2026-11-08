@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Little Quest</title>
+  </head>
+  <body>
+    <main>
+      <h1>Little Quest</h1>
+      <div id="controls">
+        <label for="seed">Map No.</label>
+        <input id="seed" type="number" min="0" step="1" />
+        <button id="random" type="button" title="Pick a random map number">Random</button>
+        <button id="restart" type="button" title="Start this map again">Restart</button>
+      </div>
+      <canvas id="screen" width="32" height="32" tabindex="0"></canvas>
+      <dl id="info">
+        <dt>Scene</dt>
+        <dd id="scene">-</dd>
+        <dt>Steps</dt>
+        <dd id="steps">0</dd>
+        <dt>Last event</dt>
+        <dd id="event">-</dd>
+      </dl>
+      <p class="help">Arrow keys or WASD to move. Space to wait. Walk up into the hut door to go inside.</p>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
