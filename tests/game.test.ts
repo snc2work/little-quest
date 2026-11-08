@@ -29,7 +29,7 @@ function worldOn(map: GameMap, player: Player): WorldState {
 function openMap(): GameMap {
   const tiles: Tile[] = new Array(GRID * GRID).fill(Tile.Grass);
   tiles.splice(0, 3, Tile.RoofLeft, Tile.RoofMid, Tile.RoofRight);
-  tiles.splice(GRID, 3, Tile.HutWall, Tile.HutDoor, Tile.HutWall);
+  tiles.splice(GRID, 3, Tile.HutWallLeft, Tile.HutDoor, Tile.HutWallRight);
   return { seed: -1, tiles, hut: { row: 0, col: 0 }, door: { row: 1, col: 1 }, doorFront: { row: 2, col: 1 } };
 }
 

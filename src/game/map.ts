@@ -58,9 +58,9 @@ function tryGenerate(seed: number, rng: Prng): GeneratedMap | null {
   set(hut.row, hut.col, Tile.RoofLeft);
   set(hut.row, hut.col + 1, Tile.RoofMid);
   set(hut.row, hut.col + 2, Tile.RoofRight);
-  set(hut.row + 1, hut.col, Tile.HutWall);
+  set(hut.row + 1, hut.col, Tile.HutWallLeft);
   set(door.row, door.col, Tile.HutDoor);
-  set(hut.row + 1, hut.col + 2, Tile.HutWall);
+  set(hut.row + 1, hut.col + 2, Tile.HutWallRight);
 
   // Water only goes on grass and never in front of the door.
   const setWater = (row: number, col: number) => {

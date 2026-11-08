@@ -29,11 +29,21 @@ const TILE_ART: Record<Tile, readonly string[]> = {
   [Tile.Grass]: ['gggg', 'gggg', 'gggg', 'gggg'],
   [Tile.Tree]: ['gGGg', 'GGGG', 'GGGG', 'gddg'],
   [Tile.Rock]: ['gssg', 'ssss', 'ssss', 'gssg'],
-  [Tile.RoofLeft]: ['gbbb', 'bbbb', 'bbbb', 'dddd'],
-  [Tile.RoofMid]: ['bbbb', 'bbbb', 'bbbb', 'dddd'],
-  [Tile.RoofRight]: ['bbbg', 'bbbb', 'bbbb', 'dddd'],
-  [Tile.HutWall]: ['eeee', 'esse', 'esse', 'eeee'],
-  [Tile.HutDoor]: ['eeee', 'edde', 'edde', 'edde'],
+  // The hut is a log cabin with a thatched roof, 3x2 tiles:
+  //   ggggddddgggg
+  //   ggdppppppdgg
+  //   gdppbppbppdg
+  //   dddddddddddd
+  //   gbbbbbbbbbbg
+  //   gbkbbkkbbkbg
+  //   gddddkkddddg
+  //   gbbbbkkbbbbg
+  [Tile.RoofLeft]: ['gggg', 'ggdp', 'gdpp', 'dddd'],
+  [Tile.RoofMid]: ['dddd', 'pppp', 'bppb', 'dddd'],
+  [Tile.RoofRight]: ['gggg', 'pdgg', 'ppdg', 'dddd'],
+  [Tile.HutWallLeft]: ['gbbb', 'gbkb', 'gddd', 'gbbb'],
+  [Tile.HutDoor]: ['bbbb', 'bkkb', 'dkkd', 'bkkb'],
+  [Tile.HutWallRight]: ['bbbg', 'bkbg', 'dddg', 'bbbg'],
   [Tile.Floor]: ['eeee', 'eeee', 'eeee', 'eeee'],
   [Tile.Wall]: ['ssss', 'ssss', 'ssss', 'ssss'],
   [Tile.ExitDoor]: ['skks', 'skks', 'skks', 'skks'],

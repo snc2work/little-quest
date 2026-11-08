@@ -27,7 +27,7 @@ export const Tile = {
   RoofLeft: 3,
   RoofMid: 4,
   RoofRight: 5,
-  HutWall: 6,
+  HutWallLeft: 6,
   HutDoor: 7,
   Floor: 8,
   Wall: 9,
@@ -37,6 +37,7 @@ export const Tile = {
   Barrel: 13,
   Water: 14,
   Path: 15,
+  HutWallRight: 16,
 } as const;
 export type Tile = (typeof Tile)[keyof typeof Tile];
 
