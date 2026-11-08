@@ -27,7 +27,8 @@ const ACTIONS: readonly Action[] = ['none', 'up', 'down', 'left', 'right'];
 /** Chances in percent, per step. */
 const RANDOM_STEP = 20;
 const WAIT = 5;
-/** After this many steps inside, the explorer heads for the exit. */
+/** Inside a room, the explorer looks around for at least MIN and at most MAX steps before heading out. */
+const MIN_ROOM_STEPS = 8;
 const MAX_ROOM_STEPS = 40;
 
 interface Goal {
@@ -118,7 +119,9 @@ export class Explorer {
     const roll = this.rng.int(100);
 
     if (state.scene === 'room') {
-      if (this.roomSteps > MAX_ROOM_STEPS || roll >= 85) return goal(ROOM_SPAWN, 'down');
+      if (this.roomSteps > MAX_ROOM_STEPS) return goal(ROOM_SPAWN, 'down');
+      const mayLeave = this.roomSteps >= MIN_ROOM_STEPS;
+      if (mayLeave && roll >= 85) return goal(ROOM_SPAWN, 'down');
       // Stand next to a closed chest and push into it.
       const chests: Goal[] = [];
       for (const spot of reachable) {
@@ -129,11 +132,14 @@ export class Explorer {
         }
       }
       if (chests.length > 0 && roll < 70) return pick(chests);
-      return roll < 70 ? wander() : goal(ROOM_SPAWN, 'down');
+      return roll < 70 || !mayLeave ? wander() : goal(ROOM_SPAWN, 'down');
     }
 
+    // Not straight back in after just coming out of the door.
     const hut = state.map.hut;
-    if (hut && roll < 30) return goal(hut.doorFront, 'up');
+    const player = playerOf(state);
+    const atDoor = hut && player.row === hut.doorFront.row && player.col === hut.doorFront.col;
+    if (hut && !atDoor && roll < 30) return goal(hut.doorFront, 'up');
     if (roll < 75) {
       // Walk off an open edge of the screen.
       const exits: Goal[] = [];
