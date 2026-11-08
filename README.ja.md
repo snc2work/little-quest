@@ -214,6 +214,12 @@ npm run dataset -- --train 200 --val 20 --test 20 --steps 500 --out data/v1
 
 場面と画面は分析用です。世界モデルには渡しません。
 
+## 関連するプロジェクト
+
+- [tinyworldformer](https://github.com/SheepSeb/tinyworldformer)：小さなゲームを1コマずつ描く、とても小さな世界モデル。Raspberry Pi Pico 2 W で動くほど小さい。世界モデルをどこまで小さくできるか、ゲームの画面を続けて描く方法を参考にしました。
+- [ABYSS GEMS](https://github.com/snc2work/abyss-gems)：前に作った小さな世界モデルの実験で、落ち物パズルをニューラルネットワークが動かします。小さなモデルを ONNX Runtime Web でブラウザで動かし、GitHub Pages で公開する方法を参考にしました。
+- [Genie](https://arxiv.org/abs/2402.15391) と [MaskGIT](https://arxiv.org/abs/2202.04200)：歩き回れる世界を描くという考え方と、1枚の画像を数回に分けて描く方法のもとになった研究です。
+
 ## ライセンス
 
 [MIT](LICENSE)
