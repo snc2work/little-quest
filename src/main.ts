@@ -25,6 +25,7 @@ function element<T extends HTMLElement>(id: string): T {
 const screen = new FrameCanvas(element<HTMLCanvasElement>('screen'));
 const seedInput = element<HTMLInputElement>('seed');
 const sceneLabel = element<HTMLElement>('scene');
+const screenLabel = element<HTMLElement>('screen-pos');
 const stepsLabel = element<HTMLElement>('steps');
 const eventLabel = element<HTMLElement>('event');
 
@@ -34,13 +35,14 @@ let fading = false;
 
 function updateInfo(event: StepEvent | null): void {
   sceneLabel.textContent = world.scene === 'map' ? 'Map' : 'Room';
+  screenLabel.textContent = `${world.map.x}, ${world.map.y}`;
   stepsLabel.textContent = String(steps);
   eventLabel.textContent = event ?? '-';
 }
 
-function start(seed: number): void {
+function start(seed: number, x = 0, y = 0): void {
   seedInput.value = String(seed);
-  world = newWorld(seed);
+  world = newWorld(seed, x, y);
   steps = 0;
   fading = false;
   screen.draw(render(world));
@@ -88,11 +90,16 @@ element<HTMLButtonElement>('random').addEventListener('click', () => start(rando
 element<HTMLButtonElement>('restart').addEventListener('click', () => start(Number(seedInput.value) || 0));
 seedInput.addEventListener('change', () => start(Number(seedInput.value) || 0));
 
-/** Opens the map from ?seed= in the URL, or a random one. */
-function initialSeed(): number {
-  const param = new URLSearchParams(window.location.search).get('seed');
-  const seed = Number(param);
-  return param !== null && Number.isInteger(seed) && seed >= 0 ? seed : randomSeed();
+/** Opens the world (and screen) from ?seed=&x=&y= in the URL, or a random world. */
+function startFromUrl(): void {
+  const params = new URLSearchParams(window.location.search);
+  const int = (name: string) => {
+    const value = params.get(name);
+    return value !== null && Number.isInteger(Number(value)) ? Number(value) : null;
+  };
+  const seed = int('seed');
+  if (seed === null || seed < 0) return start(randomSeed());
+  start(seed, int('x') ?? 0, int('y') ?? 0);
 }
 
-start(initialSeed());
+startFromUrl();

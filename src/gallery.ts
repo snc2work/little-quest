@@ -1,8 +1,11 @@
 import './style.css';
 
-import { HUT_KINDS, ROOM_SPAWN, Tile, generateMap, newWorld, renderScene, type HutKind } from './game';
+import { HUT_KINDS, ROOM_SPAWN, Tile, generateScreen, renderScene, roomOf, type HutKind } from './game';
 import { FrameCanvas } from './ui/frameCanvas';
 
+const WORLD = 1;
+/** The overview shows screens from -RADIUS to RADIUS around the start. */
+const RADIUS = 2;
 const EXAMPLES_PER_KIND = 4;
 
 const KIND_NAMES: Record<HutKind, string> = {
@@ -11,16 +14,6 @@ const KIND_NAMES: Record<HutKind, string> = {
   moss: 'Moss hut',
   bath: 'Bath house',
 };
-
-/** The first few map numbers whose hut is of each kind. */
-function exampleSeeds(): Record<HutKind, number[]> {
-  const found = Object.fromEntries(HUT_KINDS.map((kind) => [kind, [] as number[]])) as Record<HutKind, number[]>;
-  for (let seed = 1; HUT_KINDS.some((kind) => found[kind].length < EXAMPLES_PER_KIND); seed++) {
-    const list = found[generateMap(seed).map.hutKind];
-    if (list.length < EXAMPLES_PER_KIND) list.push(seed);
-  }
-  return found;
-}
 
 function figure(caption: string, href?: string): { root: HTMLElement; canvas: HTMLCanvasElement } {
   const root = document.createElement(href ? 'a' : 'figure');
@@ -33,9 +26,40 @@ function figure(caption: string, href?: string): { root: HTMLElement; canvas: HT
   return { root, canvas };
 }
 
-const container = document.getElementById('kinds') as HTMLDivElement;
-const seeds = exampleSeeds();
+const playLink = (x: number, y: number) => `./?seed=${WORLD}&x=${x}&y=${y}`;
 
+// The screens around the start, side by side, to see the shared edges.
+const overview = document.getElementById('overview') as HTMLDivElement;
+overview.style.gridTemplateColumns = `repeat(${2 * RADIUS + 1}, auto)`;
+for (let y = -RADIUS; y <= RADIUS; y++) {
+  for (let x = -RADIUS; x <= RADIUS; x++) {
+    const map = generateScreen(WORLD, x, y);
+    const link = document.createElement('a');
+    link.href = playLink(x, y);
+    link.title = `Screen (${x}, ${y})`;
+    const canvas = document.createElement('canvas');
+    link.append(canvas);
+    overview.append(link);
+    new FrameCanvas(canvas).draw(renderScene(map.tiles, null, map.hut?.kind));
+  }
+}
+
+// Screens with a hut of each kind, walking outwards from the start.
+const found = Object.fromEntries(HUT_KINDS.map((kind) => [kind, [] as { x: number; y: number }[]])) as Record<
+  HutKind,
+  { x: number; y: number }[]
+>;
+for (let ring = 0; HUT_KINDS.some((kind) => found[kind].length < EXAMPLES_PER_KIND); ring++) {
+  for (let y = -ring; y <= ring; y++) {
+    for (let x = -ring; x <= ring; x++) {
+      if (Math.max(Math.abs(x), Math.abs(y)) !== ring) continue;
+      const hut = generateScreen(WORLD, x, y).hut;
+      if (hut && found[hut.kind].length < EXAMPLES_PER_KIND) found[hut.kind].push({ x, y });
+    }
+  }
+}
+
+const container = document.getElementById('kinds') as HTMLDivElement;
 for (const kind of HUT_KINDS) {
   const section = document.createElement('section');
   const title = document.createElement('h2');
@@ -43,22 +67,22 @@ for (const kind of HUT_KINDS) {
   const row = document.createElement('div');
   row.className = 'row';
 
-  for (const seed of seeds[kind]) {
-    const world = newWorld(seed);
+  for (const { x, y } of found[kind]) {
+    const map = generateScreen(WORLD, x, y);
+    const room = roomOf(map);
+    if (!room) continue;
     const pair = document.createElement('div');
     pair.className = 'pair';
-
-    const map = figure(`Map ${seed}`, `./?seed=${seed}`);
-    new FrameCanvas(map.canvas).draw(renderScene(world.map.tiles, world.mapPlayer, kind));
-    const hasChest = world.room.tiles.includes(Tile.Chest);
-    const room = figure(hasChest ? 'Its room (chest)' : 'Its room');
-    room.root.classList.add('room');
-    new FrameCanvas(room.canvas).draw(renderScene(world.room.tiles, ROOM_SPAWN, kind, world.room.floor));
-
-    pair.append(map.root, room.root);
+    const screen = figure(`Screen (${x}, ${y})`, playLink(x, y));
+    new FrameCanvas(screen.canvas).draw(renderScene(map.tiles, null, kind));
+    const inside = figure(room.tiles.includes(Tile.Chest) ? 'Its room (chest)' : 'Its room');
+    inside.root.classList.add('room');
+    new FrameCanvas(inside.canvas).draw(renderScene(room.tiles, ROOM_SPAWN, kind, room.floor));
+    pair.append(screen.root, inside.root);
     row.append(pair);
   }
 
   section.append(title, row);
   container.append(section);
 }
+

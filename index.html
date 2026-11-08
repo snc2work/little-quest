@@ -9,16 +9,18 @@
     <main>
       <h1>Little Quest</h1>
       <div id="controls">
-        <label for="seed">Map No.</label>
+        <label for="seed">World No.</label>
         <input id="seed" type="number" min="0" step="1" />
-        <button id="random" type="button" title="Pick a random map number">Random</button>
-        <button id="restart" type="button" title="Start this map again">Restart</button>
+        <button id="random" type="button" title="Pick a random world number">Random</button>
+        <button id="restart" type="button" title="Start this world again">Restart</button>
         <a href="./gallery.html">All huts and rooms</a>
       </div>
       <canvas id="screen" width="32" height="32" tabindex="0"></canvas>
       <dl id="info">
         <dt>Scene</dt>
         <dd id="scene">-</dd>
+        <dt>Screen</dt>
+        <dd id="screen-pos">-</dd>
         <dt>Steps</dt>
         <dd id="steps">0</dd>
         <dt>Last event</dt>
@@ -33,6 +35,7 @@
       </div>
       <p class="help">
         Move with the arrow keys, WASD or the buttons. Space waits.<br />
+        Walk off the edge of the screen to go on to the next one.<br />
         To go inside, stand on the path right below the hut door and press Up.<br />
         To go back out, stand right above the room's exit and press Down.
       </p>

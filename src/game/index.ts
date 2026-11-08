@@ -1,5 +1,5 @@
 export * from './types';
-export { generateMap, reachableFrom, type GeneratedMap } from './map';
+export { generateScreen, reachableFrom, startOn } from './map';
 export { CHEST_CHANCE, ROOM_EXIT, ROOM_SPAWN, generateRoom } from './room';
-export { newWorld, step } from './world';
+export { newWorld, roomOf, step } from './world';
 export { PALETTE, render, renderScene, type Frame } from './render';

@@ -19,6 +19,18 @@ export function deriveState(seed: number, salt: number): RngState {
   return (h ^ (h >>> 16)) >>> 0;
 }
 
+/** Hashes a list of integers (negative ones too) into a 32-bit seed. */
+export function hashInts(...values: number[]): number {
+  let h = 0x811c9dc5;
+  for (const value of values) {
+    h = Math.imul(h ^ (value | 0), 0x01000193);
+    h ^= h >>> 15;
+    h = Math.imul(h, 0x2c1b3c6d);
+    h ^= h >>> 12;
+  }
+  return h >>> 0;
+}
+
 /** Returns a uniform integer in [0, bound) and the advanced state. */
 export function randomInt(state: RngState, bound: number): RandomInt {
   const nextState = (state + 0x6d2b79f5) | 0;

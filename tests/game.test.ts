@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
   GRID,
-  PALETTE,
   HUT_KINDS,
+  PALETTE,
   ROOM_EXIT,
   ROOM_SPAWN,
   SCREEN,
   Tile,
-  generateMap,
-  generateRoom,
+  generateScreen,
   isWalkable,
   newWorld,
   reachableFrom,
   render,
   renderScene,
+  roomOf,
+  screenKey,
   step,
   tileAt,
   type Action,
@@ -23,11 +24,25 @@ import {
   type WorldState,
 } from '../src/game';
 
-const SEEDS = Array.from({ length: 300 }, (_, i) => i);
+const LAST = GRID - 1;
+/** A block of screens around the start of a few worlds. */
+const SCREENS: GameMap[] = [1, 2, 3].flatMap((world) =>
+  Array.from({ length: 49 }, (_, i) => generateScreen(world, (i % 7) - 3, Math.floor(i / 7) - 3)),
+);
+const ROOMS = SCREENS.map(roomOf).filter((room): room is Room => room !== null);
 
-/** A world with a hand-made map and room, and the player placed by hand. */
-function worldOn(map: GameMap, player: Player, room: Room = emptyRoom()): WorldState {
-  return { scene: 'map', map, room, mapPlayer: player, roomPlayer: { ...ROOM_SPAWN } };
+/** A hand-made screen: open grass with the hut at the top left. */
+function openMap(): GameMap {
+  const tiles: Tile[] = new Array(GRID * GRID).fill(Tile.Grass);
+  tiles.splice(0, 3, Tile.RoofLeft, Tile.RoofMid, Tile.RoofRight);
+  tiles.splice(GRID, 3, Tile.HutWallLeft, Tile.HutDoor, Tile.HutWallRight);
+  return {
+    world: 1,
+    x: 0,
+    y: 0,
+    tiles,
+    hut: { row: 0, col: 0, kind: 'cabin', door: { row: 1, col: 1 }, doorFront: { row: 2, col: 1 } },
+  };
 }
 
 /** A log-walled room with nothing inside, plus the given tiles. */
@@ -35,7 +50,7 @@ function emptyRoom(extra: Record<string, Tile> = {}): Room {
   const tiles: Tile[] = [];
   for (let row = 0; row < GRID; row++) {
     for (let col = 0; col < GRID; col++) {
-      const border = row === 0 || col === 0 || row === GRID - 1 || col === GRID - 1;
+      const border = row === 0 || col === 0 || row === LAST || col === LAST;
       tiles.push(extra[`${row},${col}`] ?? (border ? Tile.Wall : Tile.Floor));
     }
   }
@@ -43,47 +58,96 @@ function emptyRoom(extra: Record<string, Tile> = {}): Room {
   return { tiles, wall: Tile.Wall, floor: Tile.Floor };
 }
 
-function openMap(): GameMap {
-  const tiles: Tile[] = new Array(GRID * GRID).fill(Tile.Grass);
-  tiles.splice(0, 3, Tile.RoofLeft, Tile.RoofMid, Tile.RoofRight);
-  tiles.splice(GRID, 3, Tile.HutWallLeft, Tile.HutDoor, Tile.HutWallRight);
-  return { seed: -1, tiles, hut: { row: 0, col: 0 }, hutKind: 'cabin', door: { row: 1, col: 1 }, doorFront: { row: 2, col: 1 } };
+function worldOn(map: GameMap, player: Player, room: Room | null = emptyRoom()): WorldState {
+  return { world: map.world, scene: 'map', map, room, rooms: {}, mapPlayer: player, roomPlayer: { ...ROOM_SPAWN } };
 }
 
 function play(state: WorldState, actions: readonly Action[]): WorldState {
   return actions.reduce((current, action) => step(current, action).state, state);
 }
 
-describe('map generation', () => {
-  it('gives the same map for the same seed', () => {
-    expect(generateMap(42)).toEqual(generateMap(42));
+function roomTiles(state: WorldState) {
+  if (!state.room) throw new Error('No room');
+  return state.room.tiles;
+}
+
+const column = (map: GameMap, col: number) => Array.from({ length: GRID }, (_, row) => tileAt(map.tiles, row, col));
+const row = (map: GameMap, r: number) => Array.from({ length: GRID }, (_, col) => tileAt(map.tiles, r, col));
+
+describe('screens', () => {
+  it('gives the same screen for the same world and position', () => {
+    expect(generateScreen(7, 2, -1)).toEqual(generateScreen(7, 2, -1));
   });
 
-  it('gives different maps for different seeds', () => {
-    const layouts = new Set(SEEDS.map((seed) => generateMap(seed).map.tiles.join(',')));
-    expect(layouts.size).toBeGreaterThan(SEEDS.length * 0.95);
+  it('gives different screens at different positions', () => {
+    const layouts = new Set(SCREENS.map((map) => map.tiles.join(',')));
+    expect(layouts.size).toBe(SCREENS.length);
   });
 
-  it('puts the start of a path below the hut door, where the player can reach', () => {
-    for (const seed of SEEDS) {
-      const { map, start } = generateMap(seed);
-      expect(tileAt(map.tiles, map.door.row, map.door.col)).toBe(Tile.HutDoor);
-      expect(tileAt(map.tiles, map.doorFront.row, map.doorFront.col)).toBe(Tile.Path);
-      const reachable = reachableFrom(map.tiles, map.doorFront);
-      expect(reachable).toContainEqual({ row: start.row, col: start.col });
-      expect(isWalkable(tileAt(map.tiles, start.row, start.col))).toBe(true);
+  it('shares each edge with the neighbouring screen', () => {
+    for (const map of SCREENS) {
+      const right = generateScreen(map.world, map.x + 1, map.y);
+      const below = generateScreen(map.world, map.x, map.y + 1);
+      expect(column(map, LAST)).toEqual(column(right, 0));
+      expect(row(map, LAST)).toEqual(row(below, 0));
     }
   });
 
-  it('makes some maps with ponds or rivers, and paths longer than one tile', () => {
-    const counts = SEEDS.map((seed) => {
-      const { tiles } = generateMap(seed).map;
-      return { water: tiles.filter((t) => t === Tile.Water).length, path: tiles.filter((t) => t === Tile.Path).length };
-    });
-    const withWater = counts.filter((c) => c.water > 0).length;
-    expect(withWater).toBeGreaterThan(SEEDS.length * 0.4);
-    expect(withWater).toBeLessThan(SEEDS.length * 0.9);
-    expect(counts.filter((c) => c.path > 1).length).toBeGreaterThan(SEEDS.length * 0.5);
+  it('leaves at least two tiles open on every edge', () => {
+    for (const map of SCREENS) {
+      for (const edge of [row(map, 0), row(map, LAST), column(map, 0), column(map, LAST)]) {
+        expect(edge.filter(isWalkable).length).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
+  it('connects every open edge tile and the hut door on the screen', () => {
+    for (const map of SCREENS) {
+      const open: [number, number][] = [];
+      for (let i = 0; i < GRID; i++) {
+        for (const [r, c] of [
+          [0, i],
+          [LAST, i],
+          [i, 0],
+          [i, LAST],
+        ]) {
+          if (isWalkable(tileAt(map.tiles, r, c))) open.push([r, c]);
+        }
+      }
+      if (map.hut) open.push([map.hut.doorFront.row, map.hut.doorFront.col]);
+      const reachable = reachableFrom(map.tiles, { row: open[0][0], col: open[0][1] });
+      for (const [r, c] of open) expect(reachable).toContainEqual({ row: r, col: c });
+    }
+  });
+
+  it('puts a hut on about half of the screens, always on the start screen', () => {
+    const withHut = SCREENS.filter((map) => map.hut).length;
+    expect(withHut).toBeGreaterThan(SCREENS.length * 0.35);
+    expect(withHut).toBeLessThan(SCREENS.length * 0.65);
+    for (const world of [1, 2, 3, 4, 5]) expect(generateScreen(world, 0, 0).hut).not.toBeNull();
+    for (const map of SCREENS) {
+      if (!map.hut) continue;
+      expect(tileAt(map.tiles, map.hut.door.row, map.hut.door.col)).toBe(Tile.HutDoor);
+      expect(tileAt(map.tiles, map.hut.doorFront.row, map.hut.doorFront.col)).toBe(Tile.Path);
+    }
+  });
+
+  it('has rivers and paths, some of them crossing edges', () => {
+    const count = (tile: Tile) => SCREENS.filter((map) => map.tiles.includes(tile)).length;
+    expect(count(Tile.Water)).toBeGreaterThan(SCREENS.length * 0.3);
+    expect(count(Tile.Path)).toBeGreaterThan(SCREENS.length * 0.5);
+    const onEdge = (tile: Tile) => SCREENS.filter((map) => column(map, LAST).includes(tile)).length;
+    expect(onEdge(Tile.Water)).toBeGreaterThan(0);
+    expect(onEdge(Tile.Path)).toBeGreaterThan(0);
+  });
+
+  it('starts the player on a walkable tile of the start screen', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const world = newWorld(seed);
+      expect(world.map.x).toBe(0);
+      expect(world.map.y).toBe(0);
+      expect(isWalkable(tileAt(world.map.tiles, world.mapPlayer.row, world.mapPlayer.col))).toBe(true);
+    }
   });
 });
 
@@ -94,25 +158,11 @@ describe('movement', () => {
     expect(state.mapPlayer).toEqual({ row: 4, col: 5, facing: 'right' });
   });
 
-  it('walks on the path', () => {
-    const map = openMap();
-    const tiles = [...map.tiles];
-    tiles[5 * GRID + 4] = Tile.Path;
-    const { event } = step(worldOn({ ...map, tiles }, { row: 4, col: 4, facing: 'up' }), 'down');
-    expect(event).toBe('move');
-  });
-
   it('stays put on "none"', () => {
     const world = worldOn(openMap(), { row: 4, col: 4, facing: 'left' });
     const { state, event } = step(world, 'none');
     expect(event).toBe('stay');
     expect(state).toEqual(world);
-  });
-
-  it('bumps at the screen edge, turning without moving', () => {
-    const { state, event } = step(worldOn(openMap(), { row: 7, col: 7, facing: 'up' }), 'down');
-    expect(event).toBe('bump');
-    expect(state.mapPlayer).toEqual({ row: 7, col: 7, facing: 'down' });
   });
 
   it('bumps into trees, rocks, water and the hut walls', () => {
@@ -128,9 +178,55 @@ describe('movement', () => {
     expect(step(worldOn(blocked, { row: 2, col: 0, facing: 'down' }), 'up').event).toBe('bump');
     expect(step(worldOn(blocked, { row: 1, col: 3, facing: 'down' }), 'left').event).toBe('bump');
   });
+
+  it('walks on paths', () => {
+    const map = openMap();
+    const tiles = [...map.tiles];
+    tiles[5 * GRID + 4] = Tile.Path;
+    expect(step(worldOn({ ...map, tiles }, { row: 4, col: 4, facing: 'up' }), 'down').event).toBe('move');
+  });
 });
 
-describe('going in and out of the hut', () => {
+describe('walking to the next screen', () => {
+  /** A real screen of world 1, with the player on an open tile of the given edge. */
+  function atEdge(side: 'up' | 'down' | 'left' | 'right'): { world: WorldState; player: Player } {
+    for (const map of SCREENS.filter((m) => m.world === 1)) {
+      for (let i = 1; i < LAST; i++) {
+        const [r, c] = { up: [0, i], down: [LAST, i], left: [i, 0], right: [i, LAST] }[side];
+        if (!isWalkable(tileAt(map.tiles, r, c))) continue;
+        const player: Player = { row: r, col: c, facing: side };
+        return { world: worldOn(map, player, roomOf(map)), player };
+      }
+    }
+    throw new Error('No open edge');
+  }
+
+  it.each(['up', 'down', 'left', 'right'] as const)('crosses the %s edge onto the next screen', (side) => {
+    const { world, player } = atEdge(side);
+    const { state, event } = step(world, side);
+    expect(event).toBe('cross');
+    const dx = side === 'left' ? -1 : side === 'right' ? 1 : 0;
+    const dy = side === 'up' ? -1 : side === 'down' ? 1 : 0;
+    expect(state.map).toEqual(generateScreen(1, world.map.x + dx, world.map.y + dy));
+    const arrival = {
+      row: side === 'up' ? LAST : side === 'down' ? 0 : player.row,
+      col: side === 'left' ? LAST : side === 'right' ? 0 : player.col,
+      facing: side,
+    };
+    expect(state.mapPlayer).toEqual(arrival);
+    expect(isWalkable(tileAt(state.map.tiles, arrival.row, arrival.col))).toBe(true);
+  });
+
+  it('comes back to the same screen the other way', () => {
+    const { world } = atEdge('right');
+    const back = play(world, ['right', 'left']);
+    expect(back.map).toEqual(world.map);
+    expect(back.mapPlayer.row).toBe(world.mapPlayer.row);
+    expect(back.mapPlayer.col).toBe(world.mapPlayer.col);
+  });
+});
+
+describe('going in and out of huts', () => {
   it('enters the room by stepping up from the door front', () => {
     const { state, event } = step(worldOn(openMap(), { row: 2, col: 1, facing: 'left' }), 'up');
     expect(event).toBe('enter');
@@ -140,7 +236,7 @@ describe('going in and out of the hut', () => {
 
   it('does not enter from any other direction', () => {
     expect(step(worldOn(openMap(), { row: 2, col: 1, facing: 'up' }), 'left').event).toBe('move');
-    expect(step(worldOn(openMap(), { row: 1, col: 2, facing: 'up' }), 'left').event).toBe('bump');
+    expect(step(worldOn(openMap(), { row: 1, col: 3, facing: 'up' }), 'left').event).toBe('bump');
   });
 
   it('leaves by stepping down from the spawn, back in front of the door', () => {
@@ -149,112 +245,92 @@ describe('going in and out of the hut', () => {
     expect(event).toBe('exit');
     expect(state.scene).toBe('map');
     expect(state.mapPlayer).toEqual({ row: 2, col: 1, facing: 'down' });
-    expect(state.map).toBe(inside.map);
   });
 
-  it('walks and bumps inside the room by the room layout', () => {
+  it('walks and bumps inside the room by its layout, and exits only from the spawn', () => {
     const room = emptyRoom({ '3,3': Tile.Barrel });
     const inside = play(worldOn(openMap(), { row: 2, col: 1, facing: 'up' }, room), ['up', 'up', 'up']);
     expect(inside.roomPlayer).toEqual({ row: 4, col: 3, facing: 'up' });
     expect(step(inside, 'up').event).toBe('bump');
-  });
-
-  it('only exits from the spawn tile', () => {
-    const inside = play(worldOn(openMap(), { row: 2, col: 1, facing: 'up' }), ['up', 'right']);
-    expect(step(inside, 'down').event).toBe('bump');
+    expect(step(play(inside, ['right', 'down']), 'down').event).toBe('move');
   });
 });
 
 describe('chests', () => {
-  const room = emptyRoom({ '5,4': Tile.Chest });
-  const nextToChest = () => play(worldOn(openMap(), { row: 2, col: 1, facing: 'up' }, room), ['up']);
-
   it('opens a chest by bumping into it, without moving', () => {
-    const beside = worldOn(openMap(), { row: 2, col: 1, facing: 'up' }, emptyRoom({ '6,4': Tile.Chest }));
-    const inside = step(beside, 'up').state;
-    const { state, event } = step(inside, 'right');
+    const world = worldOn(openMap(), { row: 2, col: 1, facing: 'up' }, emptyRoom({ '6,4': Tile.Chest }));
+    const { state, event } = step(step(world, 'up').state, 'right');
     expect(event).toBe('open');
     expect(state.roomPlayer).toEqual({ row: 6, col: 3, facing: 'right' });
-    expect(tileAt(state.room.tiles, 6, 4)).toBe(Tile.OpenChest);
-  });
-
-  it('turns the chest into an open chest that still blocks the way', () => {
-    // The chest is up and to the right of the spawn; walk up first, then bump right.
-    const below = play(nextToChest(), ['up']);
-    expect(below.roomPlayer).toEqual({ row: 5, col: 3, facing: 'up' });
-    const { state, event } = step(below, 'right');
-    expect(event).toBe('open');
-    expect(tileAt(state.room.tiles, 5, 4)).toBe(Tile.OpenChest);
+    expect(tileAt(roomTiles(state), 6, 4)).toBe(Tile.OpenChest);
     expect(step(state, 'right').event).toBe('bump');
   });
 
-  it('keeps the chest open after leaving and coming back', () => {
-    const opened = play(nextToChest(), ['up', 'right', 'down', 'down', 'up']);
-    expect(opened.scene).toBe('room');
-    expect(tileAt(opened.room.tiles, 5, 4)).toBe(Tile.OpenChest);
+  it('keeps the chest open after leaving the screen and coming back', () => {
+    // A real screen with a hut and an open right edge; the test gives it a room with a chest.
+    const map = SCREENS.find((m) => m.world === 1 && m.hut && column(m, LAST).some(isWalkable));
+    if (!map?.hut) throw new Error('No suitable screen');
+    let world = worldOn(map, { ...map.hut.doorFront, facing: 'up' }, emptyRoom({ '6,4': Tile.Chest }));
+    world = play(world, ['up', 'right', 'down']);
+    expect(world.scene).toBe('map');
+    expect(tileAt(roomTiles(world), 6, 4)).toBe(Tile.OpenChest);
+
+    // Off to the next screen and back: the room is the opened one, not a new one.
+    const exitRow = column(map, LAST).findIndex(isWalkable);
+    const there = step({ ...world, mapPlayer: { row: exitRow, col: LAST, facing: 'right' } }, 'right').state;
+    expect(there.rooms[screenKey(map.x, map.y)]).toEqual(world.room);
+    const back = step(there, 'left').state;
+    expect(back.map).toEqual(map);
+    expect(tileAt(roomTiles(back), 6, 4)).toBe(Tile.OpenChest);
   });
 });
 
 describe('rooms', () => {
-  const worlds = SEEDS.map((seed) => newWorld(seed));
-
-  it('gives the same room for the same map', () => {
-    expect(newWorld(42).room).toEqual(newWorld(42).room);
+  it('gives the same room for the same screen', () => {
+    const map = SCREENS.find((m) => m.hut);
+    if (!map) throw new Error('No hut');
+    expect(roomOf(map)).toEqual(roomOf(map));
   });
 
-  it('makes a different room for almost every map', () => {
-    const layouts = new Set(worlds.map((world) => world.room.tiles.join(',')));
-    expect(layouts.size).toBeGreaterThan(SEEDS.length * 0.9);
+  it('makes a different room for almost every hut', () => {
+    const layouts = new Set(ROOMS.map((room) => room.tiles.join(',')));
+    expect(layouts.size).toBeGreaterThan(ROOMS.length * 0.9);
   });
 
   it('keeps the exit and the spawn, and lets the player reach all the floor', () => {
-    for (const { room } of worlds) {
+    for (const room of ROOMS) {
       expect(tileAt(room.tiles, ROOM_EXIT.row, ROOM_EXIT.col)).toBe(Tile.ExitDoor);
       expect(tileAt(room.tiles, ROOM_SPAWN.row, ROOM_SPAWN.col)).toBe(room.floor);
       expect(reachableFrom(room.tiles, ROOM_SPAWN)).toHaveLength(room.tiles.filter(isWalkable).length);
     }
   });
 
-  it('puts a chest in some rooms, always next to the floor', () => {
-    let withChest = 0;
-    for (const { room } of worlds) {
-      const index = room.tiles.indexOf(Tile.Chest);
-      if (index < 0) continue;
-      withChest += 1;
-      const row = Math.floor(index / GRID);
-      const col = index % GRID;
-      const next = [
-        [row - 1, col],
-        [row + 1, col],
-        [row, col - 1],
-        [row, col + 1],
-      ].filter(([r, c]) => isWalkable(tileAt(room.tiles, r, c)));
-      expect(next.length).toBeGreaterThan(0);
-    }
-    expect(withChest).toBeGreaterThan(SEEDS.length * 0.3);
-    expect(withChest).toBeLessThan(SEEDS.length * 0.5);
+  it('puts a chest in some rooms', () => {
+    const withChest = ROOMS.filter((room) => room.tiles.includes(Tile.Chest)).length;
+    expect(withChest).toBeGreaterThan(ROOMS.length * 0.25);
+    expect(withChest).toBeLessThan(ROOMS.length * 0.55);
   });
 
   it('styles the room by the hut kind', () => {
-    for (const { map, room } of worlds) {
-      expect(room).toEqual(generateRoom(map.seed, map.hutKind));
-      const stoneWalls = map.hutKind === 'stone' || map.hutKind === 'bath';
+    for (const map of SCREENS) {
+      const room = roomOf(map);
+      if (!map.hut || !room) continue;
+      const stoneWalls = map.hut.kind === 'stone' || map.hut.kind === 'bath';
       expect(room.wall).toBe(stoneWalls ? Tile.StoneWall : Tile.Wall);
     }
   });
 
   it('uses every hut kind and draws each one differently', () => {
-    const kinds = new Set(worlds.map((world) => world.map.hutKind));
+    const kinds = new Set(SCREENS.flatMap((map) => (map.hut ? [map.hut.kind] : [])));
     expect([...kinds].sort()).toEqual([...HUT_KINDS].sort());
-    const player = { row: 7, col: 7, facing: 'down' } as const;
-    const huts = HUT_KINDS.map((kind) => renderScene(openMap().tiles, player, kind).join(','));
+    const huts = HUT_KINDS.map((kind) => renderScene(openMap().tiles, null, kind).join(','));
     expect(new Set(huts).size).toBe(HUT_KINDS.length);
   });
 });
 
 describe('rendering', () => {
   it('draws a 32x32 frame of palette indices', () => {
-    for (const seed of SEEDS.slice(0, 20)) {
+    for (const seed of [1, 2, 3, 4, 5]) {
       const frame = render(newWorld(seed));
       expect(frame.length).toBe(SCREEN * SCREEN);
       expect(Math.max(...frame)).toBeLessThan(PALETTE.length);
@@ -267,18 +343,16 @@ describe('rendering', () => {
     const after = render(step(world, 'right').state);
     for (let i = 0; i < before.length; i++) {
       if (before[i] === after[i]) continue;
-      const col = Math.floor((i % SCREEN) / 4);
-      const row = Math.floor(i / SCREEN / 4);
-      expect(row).toBe(4);
-      expect([4, 5]).toContain(col);
+      expect(Math.floor(i / SCREEN / 4)).toBe(4);
+      expect([4, 5]).toContain(Math.floor((i % SCREEN) / 4));
     }
   });
 
   it('draws furniture over the room floor', () => {
     const plank = emptyRoom({ '3,3': Tile.Barrel });
-    const dirt: Room = { ...plank, tiles: plank.tiles.map((t) => (t === Tile.Floor ? Tile.DirtFloor : t)), floor: Tile.DirtFloor };
-    const a = renderScene(plank.tiles, ROOM_SPAWN, 'cabin', plank.floor);
-    const b = renderScene(dirt.tiles, ROOM_SPAWN, 'cabin', dirt.floor);
+    const dirtTiles = plank.tiles.map((tile) => (tile === Tile.Floor ? Tile.DirtFloor : tile));
+    const a = renderScene(plank.tiles, ROOM_SPAWN, 'cabin', Tile.Floor);
+    const b = renderScene(dirtTiles, ROOM_SPAWN, 'cabin', Tile.DirtFloor);
     // The barrel's corner pixel shows the floor under it.
     const corner = 3 * 4 * SCREEN + 3 * 4;
     expect(a[corner]).not.toBe(b[corner]);

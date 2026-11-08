@@ -82,16 +82,28 @@ export type Scene = 'map' | 'room';
 export const HUT_KINDS = ['cabin', 'stone', 'moss', 'bath'] as const;
 export type HutKind = (typeof HUT_KINDS)[number];
 
-export interface GameMap {
-  seed: number;
-  tiles: Layout;
+export interface Hut {
   /** Top-left tile of the 3x2 hut. */
-  hut: Position;
-  hutKind: HutKind;
+  row: number;
+  col: number;
+  kind: HutKind;
   /** The hut's door tile. */
   door: Position;
   /** The tile below the door; stepping up from here enters the hut. */
   doorFront: Position;
+}
+
+/**
+ * One screen of the outdoor world. The world goes on in every direction; each
+ * screen is fixed by the world number and its position (x to the right, y down).
+ */
+export interface GameMap {
+  world: number;
+  x: number;
+  y: number;
+  tiles: Layout;
+  /** About half of the screens have a hut. */
+  hut: Hut | null;
 }
 
 export interface Room {
@@ -101,22 +113,31 @@ export interface Room {
 }
 
 export interface WorldState {
+  world: number;
   scene: Scene;
+  /** The screen the player is on. */
   map: GameMap;
-  /** The inside of this map's hut. Opened chests stay open. */
-  room: Room;
-  /** The player on the map. Kept while inside, so leaving puts them back by the door. */
+  /** The inside of this screen's hut, or null if it has none. */
+  room: Room | null;
+  /** Rooms of screens visited before, by screenKey, so opened chests stay open. */
+  rooms: Readonly<Record<string, Room>>;
+  /** The player on the screen. Kept while inside, so leaving puts them back by the door. */
   mapPlayer: Player;
   /** The player in the room. */
   roomPlayer: Player;
 }
 
+export function screenKey(x: number, y: number): string {
+  return `${x},${y}`;
+}
+
 /**
- * What a step did. "enter" and "exit" switch the scene; these are the signals the
- * world model will have to predict along with the next image. "open" is bumping
- * into a closed chest, which opens it.
+ * What a step did. "enter" and "exit" switch between a screen and a room, and
+ * "cross" moves to the next screen; these are the signals the world model will
+ * have to predict along with the next image. "open" is bumping into a closed
+ * chest, which opens it.
  */
-export type StepEvent = 'stay' | 'move' | 'bump' | 'open' | 'enter' | 'exit';
+export type StepEvent = 'stay' | 'move' | 'bump' | 'open' | 'enter' | 'exit' | 'cross';
 
 export interface StepResult {
   state: WorldState;

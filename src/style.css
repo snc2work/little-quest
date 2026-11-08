@@ -70,7 +70,7 @@ button:hover {
 
 #info {
   display: grid;
-  grid-template-columns: repeat(3, auto auto);
+  grid-template-columns: repeat(4, auto auto);
   gap: 4px 12px;
   margin: 0;
 }
@@ -103,6 +103,19 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+#overview {
+  display: grid;
+  gap: 0;
+  justify-content: start;
+}
+
+#overview canvas {
+  display: block;
+  width: 112px;
+  height: 112px;
+  image-rendering: pixelated;
 }
 
 .gallery .pair {

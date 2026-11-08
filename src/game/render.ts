@@ -163,7 +163,12 @@ function drawArt(frame: Frame, art: readonly string[], row: number, col: number)
  * Draws a scene. hutKind picks the look of any hut tiles in the layout; base is
  * the floor drawn under tiles with transparent pixels.
  */
-export function renderScene(tiles: Layout, player: Player, hutKind: HutKind = 'cabin', base: Tile = Tile.Grass): Frame {
+export function renderScene(
+  tiles: Layout,
+  player: Player | null,
+  hutKind: HutKind = 'cabin',
+  base: Tile = Tile.Grass,
+): Frame {
   const frame: Frame = new Uint8Array(SCREEN * SCREEN);
   const baseArt = TILE_ART[base];
   for (let row = 0; row < GRID; row++) {
@@ -173,12 +178,12 @@ export function renderScene(tiles: Layout, player: Player, hutKind: HutKind = 'c
       drawArt(frame, art, row, col);
     }
   }
-  drawArt(frame, PLAYER_ART[player.facing], player.row, player.col);
+  if (player) drawArt(frame, PLAYER_ART[player.facing], player.row, player.col);
   return frame;
 }
 
 export function render(state: WorldState): Frame {
-  return state.scene === 'room'
-    ? renderScene(state.room.tiles, state.roomPlayer, state.map.hutKind, state.room.floor)
-    : renderScene(state.map.tiles, state.mapPlayer, state.map.hutKind);
+  if (state.scene === 'map') return renderScene(state.map.tiles, state.mapPlayer, state.map.hut?.kind);
+  if (!state.room) throw new Error('Inside a room, but the screen has none');
+  return renderScene(state.room.tiles, state.roomPlayer, state.map.hut?.kind, state.room.floor);
 }
