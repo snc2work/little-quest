@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-A tiny **world model** you can play in the browser. It looks at the last frame (32×32 pixels, 11 colors) and your key, and draws the next frame. Walk into a hut or off the edge of the screen, and it makes up the room or the next screen on the spot. It is a toy-sized take on the idea behind [Genie](https://arxiv.org/abs/2402.15391): a world you can walk around in, drawn frame by frame by a neural network.
+A tiny **world model** you can play in the browser. It looks at the last frame (32×32 pixels, 11 colors) and your key, and draws the next frame. Walk into a hut or off the edge of the screen, and it makes up the room or the next screen on the spot. The model is probabilistic. It does not give one fixed answer: it gives probabilities, and the next frame is sampled from them, so the same frame and key can lead to a different room each time. It is a toy-sized take on the idea behind [Genie](https://arxiv.org/abs/2402.15391): a world you can walk around in, drawn frame by frame by a neural network.
 
 **Play it in your browser:** https://snc2work.github.io/little-quest/
 
@@ -12,7 +12,7 @@ The page loads the model and opens a random world. Every frame on the left is dr
 
 *World No. 332, temperature 1.0. The two worlds match until the player enters the blue-roofed bathhouse. There the model makes up its own bath room, with a pool, plants and barrels. Back outside, the screen it left comes back. Across the edge, it draws a new screen of its own.*
 
-Each row below starts from the same frame, one step before going into a hut (first picture) or across the edge of the screen (second picture). Each time the model draws the next frame, it makes a different place. The walls, floor and pool match the kind of hut. The edge shared with the screen you came from carries over.
+Each row below starts from the same frame, one step before going into a hut (first picture) or across the edge of the screen (second picture). Because the model samples, it makes a different place each time it draws the next frame. The walls, floor and pool match the kind of hut. The edge shared with the screen you came from carries over.
 
 ![Rooms the model drew when entering a hut, four times each](docs/images/new-rooms.png)
 
@@ -22,14 +22,15 @@ Each row below starts from the same frame, one step before going into a hut (fir
 
 - **The real game only makes training videos.** A small adventure game was written for this project (see "The game" below). A simple bot walks around it and records frames and keys. The model never sees the rules, the maps or the rooms. It sees only frames and keys.
 - **Generate, do not copy.** When the player goes somewhere new, there is no right answer to predict. The model is free to draw any room or screen that fits. It only has to be believable and to hold together.
+- **A probabilistic model.** For every cell, the model gives a probability for each of the 60 blocks (see the next point), and the next frame is sampled from these probabilities. Where the next frame follows from the current one (walking, bumping), almost all of the probability sits on one block, so the result is the same every time. Where it does not (a new room or screen), the probability is spread over many blocks, so the same frame and key can lead to different places. The temperature sets how widely the choices spread. The world number fixes the random choices, so a world can be played again.
 - **Frames as blocks.** The game draws everything from 4×4 pictures on a grid, and the training frames contain only 60 different 4×4 blocks. A frame is treated as an 8×8 grid of those blocks. The model picks one block per cell, and the frame is put back together by looking the blocks up. Genie similarly works on image tokens.
-- **Drawn over a few rounds (MaskGIT).** The model starts from a grid where every cell is unknown and fills it in over up to 8 rounds, the cells it is surest about first. When walking or bumping into a tree, it is sure of almost every cell in the first round. In a new room it samples, so the blocks that go together (a table, a hut, a river) come out whole and differ every time.
+- **Drawn over a few rounds (MaskGIT).** The model starts from a grid where every cell is unknown and fills it in over up to 8 rounds, the cells it is surest about first. When walking or bumping into a tree, it is sure of almost every cell in the first round. Later rounds see the cells already chosen, so the blocks that go together (a table, a hut, a river) come out whole.
 - **A small memory of places, outside the model.** Along with each frame, the model also says what happened (see "Events" below). From that alone, the page keeps the last frame of each place. When the player goes back somewhere, that frame is handed to the model as the known part of the next frame, and the model only draws the player again. Every frame shown is still drawn by the model.
 - **The black fade is the page's.** The short black screen when going in or out is a display effect added by the page. It is not drawn by the model.
 
 ## About the world model
 
-A Transformer over the 8×8 grid of blocks, with 2.7 million parameters (6 layers, width 192, 6 heads). For each cell it gets the block of the current frame and the block of the next frame if already known (or "unknown"), plus the key. It gives a score for each of the 60 blocks in every cell, and the event of the step.
+A Transformer over the 8×8 grid of blocks, with 2.7 million parameters (6 layers, width 192, 6 heads). For each cell it gets the block of the current frame and the block of the next frame if already known (or "unknown"), plus the key. It gives, for every cell, the probability of each of the 60 blocks, and the event of the step.
 
 | | |
 | --- | --- |
